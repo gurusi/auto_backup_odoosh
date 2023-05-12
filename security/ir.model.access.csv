@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_db_backup_log,access_db_backup_log,model_db_backup_log,base.group_user,1,1,1,1

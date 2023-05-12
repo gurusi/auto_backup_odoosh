@@ -1,0 +1,72 @@
+<odoo>
+    <!-- BACKUP CONFIG FORM VIEW EXTENSION -->
+    <record id="view_backup_config_form_sh" model="ir.ui.view">
+        <field name="name">db.backup.form.sh</field>
+        <field name="model">db.backup</field>
+        <field name="inherit_id" ref="auto_backup.view_backup_config_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/group" position="before">
+                <separator col="2" string="Odoo type selection"/>
+                <field name="odoo_type"/>
+            </xpath>
+
+            <!--replace host field if 'sh' odoo type is selected-->
+            <field name="host" position="attributes">
+                <attribute name="attrs">{'invisible': [('odoo_type', '=', 'sh')]}</attribute>
+            </field>
+
+            <field name="host" position="after">
+                <div class="o_form_label font-weight-bold" attrs="{'invisible': [('odoo_type', '!=', 'sh')]}">Host</div>
+                <div attrs="{'invisible': [('odoo_type', '!=', 'sh')]}">SH</div>
+            </field>
+
+            <!--Hide port field if 'sh' odoo type is selected-->
+            <field name="port" position="attributes">
+                <attribute name="attrs">{'invisible': [('odoo_type', '=', 'sh')]}</attribute>
+            </field>
+            <!--Make backup type readonly when SH is selected (only zip is currently supported)-->
+            <field name="backup_type" position="attributes">
+                <attribute name="attrs">{'readonly': [('odoo_type', '=', 'sh')]}</attribute>
+            </field>
+        </field>
+    </record>
+
+     <!-- BACKUP CONFIG TREE VIEW EXTENSION -->
+    <record id="view_backup_config_tree_sh" model="ir.ui.view">
+        <field name="name">db.backup.tree.sh</field>
+        <field name="model">db.backup</field>
+        <field name="inherit_id" ref="auto_backup.view_backup_config_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='host']" position="before">
+                <field name="odoo_type"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- BACKUP LOG TABLE TREE VIEW -->
+    <record id="view_backup_log_tree" model="ir.ui.view">
+        <field name="name">db.backup.log.tree</field>
+        <field name="model">db.backup.log</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree create="false">
+                <field name="name" />
+                <field name="date_created" />
+                <field name="date_copied" />
+                <field name="date_removed_local" />
+                <field name="date_removed_remote" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- BACKUP LOG TABLE ACTION -->
+    <record id="action_backup_log" model="ir.actions.act_window">
+        <field name="name">Backup log</field>
+        <field name="res_model">db.backup.log</field>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="view_backup_log_tree"/>
+    </record>
+    
+    <!-- BACKUP LOG MENU ITEM -->
+    <menuitem parent="auto_backup.auto_backup_menu" action="action_backup_log" id="backup_log_menu"/>
+</odoo>
