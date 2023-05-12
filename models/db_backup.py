@@ -47,18 +47,25 @@ class DbBackup(models.Model):
             json_path = os.path.join(os.getcwd(), 'backup.daily', f'{rec.name}_daily.json')
             log.info(f"reading json: {json_path}")
             copied_today_local = False
-            with open (json_path) as file:
-                data = json.load(file)
-                log.info(f"json file data: {data}")
-                daily_backup_date = data['backup_datetime_utc']
-                # compare backup.daily and db.bakcup.log dates
-                log.info(f"daily backup date: {daily_backup_date}")
-                log.info(f"latest logged date: {latest_log.date_created}")
-                # if equal, backup was alraedy performed and we will skip to SFTP part
-                daily_backup_date_object = datetime.datetime.strptime(daily_backup_date, "%Y-%m-%d %H:%M:%S").date()
-                if latest_log.date_created and daily_backup_date_object == latest_log.date_created.date():
-                    log.info("Local backup already made today. Skipping to SFTP check")
-                    copied_today_local = True
+            # try to open the json file with data about the backup - if it doesn't exist, there is no backup and the functions will end
+            try:
+                with open (json_path) as file:
+                    data = json.load(file)
+                    log.info(f"json file data: {data}")
+                    daily_backup_date = data['backup_datetime_utc']
+                    # compare backup.daily and db.bakcup.log dates
+                    log.info(f"daily backup date: {daily_backup_date}")
+                    log.info(f"latest logged date: {latest_log.date_created}")
+                    # if equal, backup was alraedy performed and we will skip to SFTP part
+                    daily_backup_date_object = datetime.datetime.strptime(daily_backup_date, "%Y-%m-%d %H:%M:%S").date()
+                    if latest_log.date_created and daily_backup_date_object == latest_log.date_created.date():
+                        log.info("Local backup already made today. Skipping to SFTP check")
+                        copied_today_local = True
+
+            except FileNotFoundError:
+                log.warning(f"The file {json_path} was not found. Skipping to SFTP check")
+                copied_today_local = True
+
 
             if not copied_today_local:
                 try:
@@ -244,7 +251,7 @@ class DbBackup(models.Model):
                             sftp.unlink(file)
                             db_log = self.env['db.backup.log'].search([('name', '=', file)])
                             if db_log:
-                                db_log.write({'date_removed_local': datetime.datetime.today()})
+                                db_log.write({'date_removed_remote': datetime.datetime.today()})
             # Close the SFTP session.
             sftp.close()
             s.close()
